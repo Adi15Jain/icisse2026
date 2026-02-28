@@ -243,7 +243,7 @@ section {
     justify-content: center;
     padding: 7rem 5% 6rem; /* Increased bottom padding to 6rem */
     overflow: hidden;
-    background-image: url("https://cdn.jsdelivr.net/gh/Adi15Jain/icisse2026-assets@main/hero-background.jpg");
+    background-image: url("https://cdn.jsdelivr.net/gh/Adi15Jain/assets@main/icisse/hero-background.jpg");
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
