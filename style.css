@@ -85,6 +85,16 @@ body {
     scroll-snap-type: y proximity;
 }
 
+/* Prevent any section's decorative shapes (absolute elements with
+   negative offsets) from widening the document beyond 100vw.
+   overflow:clip clips without creating a scroll container — critical
+   for sections that have sticky/fixed siblings. */
+section,
+header,
+footer {
+    overflow-x: clip;
+}
+
 h1,
 h2,
 h3,
@@ -183,6 +193,24 @@ a {
     background-color: var(--color-accent);
 }
 
+/* When the mobile nav overlay is open, force white text regardless of scroll state.
+   This prevents the .navbar.scrolled .nav-link dark-color rule from making
+   links invisible against the dark overlay background. */
+.navbar.scrolled .nav-links.open .nav-link,
+.navbar .nav-links.open .nav-link {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.navbar.scrolled .nav-links.open .nav-link:hover,
+.navbar .nav-links.open .nav-link:hover {
+    color: #ffffff !important;
+}
+
+/* Also keep the hamburger bars white when the overlay is open */
+.navbar.scrolled .hamburger.active .bar {
+    background-color: #ffffff;
+}
+
 .logo {
     font-size: 1.5rem;
     font-weight: 700;
@@ -237,11 +265,14 @@ section {
 /* Hero Section */
 .hero-section {
     position: relative;
+    /* Always exactly one viewport height on every screen */
     height: 100vh;
+    height: 100svh; /* Use small viewport height on mobile to avoid address-bar issues */
+    min-height: 600px; /* Absolute floor so it never collapses */
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 7rem 5% 6rem; /* Increased bottom padding to 6rem */
+    padding: 7rem 5% 6rem;
     overflow: hidden;
     background-image: url("https://cdn.jsdelivr.net/gh/Adi15Jain/assets@main/icisse/hero-background.jpg");
     background-size: cover;
@@ -591,6 +622,9 @@ section {
 .glass-slider-wrapper {
     position: relative;
     width: 100%;
+    /* Guarantee enough height on every breakpoint so
+       absolutely-positioned slides never collapse */
+    min-height: 380px;
     height: 100%;
     border-radius: var(--radius-xl);
     overflow: hidden;
@@ -728,11 +762,12 @@ section {
     box-shadow:
         0 8px 32px rgba(0, 0, 0, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    padding: 3rem 2.5rem;
+    padding: 3rem 2.5rem 4rem; /* extra bottom padding so text clears the dots */
 
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start; /* top-align so long text never clips at bottom */
+    overflow-y: auto; /* scroll if content truly overflows */
 }
 
 /* Shimmer highlight on top edge */
@@ -898,18 +933,128 @@ section {
     margin-bottom: 0;
 }
 
-/* Responsive */
+/* =============================================
+   HAMBURGER MENU
+   ============================================= */
+.hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    z-index: 200;
+    border-radius: var(--radius-md);
+    transition: background 0.3s ease;
+}
+
+.hamburger:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.hamburger .bar {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: var(--color-text-inverse);
+    border-radius: 2px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+}
+
+/* Scrolled state — bars turn dark */
+.navbar.scrolled .hamburger .bar {
+    background: var(--color-primary);
+}
+
+/* Active (open) state → X animation */
+.hamburger.active .bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.hamburger.active .bar:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+.hamburger.active .bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* =============================================
+   RESPONSIVE: Tablet & Mobile (≤ 900px)
+   ============================================= */
 @media (max-width: 900px) {
-    .hero-title {
-        font-size: clamp(2rem, 8vw, 3.5rem);
+    /* Navbar */
+    .hamburger {
+        display: flex;
     }
 
     .nav-links {
-        display: none; /* Can add hamburger menu later */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background: rgba(0, 10, 60, 0.97);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+        z-index: 150;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-20px);
+        transition:
+            opacity 0.35s var(--ease-premium),
+            transform 0.35s var(--ease-premium),
+            visibility 0.35s;
+    }
+
+    .nav-links.open {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .nav-link {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+        letter-spacing: 0.5px;
+    }
+
+    .nav-link::after {
+        height: 2px;
+        background-color: var(--color-accent);
+    }
+
+    .nav-link:hover {
+        color: var(--color-text-inverse);
+    }
+
+    .nav-register-btn {
+        margin-left: 0 !important;
+        padding: 0.85rem 2.5rem;
+        font-size: 1rem;
+    }
+
+    /* Hero */
+    .hero-title {
+        font-size: clamp(2rem, 8vw, 3.5rem);
     }
 }
 
-@media (max-width: 600px) {
+/* =============================================
+   RESPONSIVE: Mobile (≤ 768px)
+   ============================================= */
+@media (max-width: 768px) {
     .hero-actions {
         flex-direction: column;
         width: 100%;
@@ -919,8 +1064,16 @@ section {
 
     .detail-card {
         width: 100%;
+        min-width: unset;
+        padding: 1.1rem 1.25rem;
+        min-height: unset;
+    }
+
+    .detail-card strong {
+        font-size: 1.15rem;
     }
 }
+
 /* ============================================
    About TMU Section — Premium Glassmorphism
    ============================================ */
@@ -1979,7 +2132,10 @@ section {
     background: var(--gradient-primary);
     color: var(--color-text-inverse);
     position: relative;
-    overflow: hidden;
+    /* overflow:clip clips without creating a scroll container,
+       preventing decorative absolute shapes from expanding document width */
+    overflow: clip;
+    max-width: 100%;
 }
 
 .objectives-section::after {
@@ -2385,9 +2541,10 @@ section {
 
 @media (max-width: 768px) {
     .slider-card {
-        width: 300px;
-        min-height: 280px;
-        padding: 2rem 1.5rem;
+        /* Use viewport-relative width so card never overflows body */
+        width: min(300px, calc(88vw));
+        min-height: 260px;
+        padding: 1.75rem 1.5rem;
     }
 }
 
@@ -3137,7 +3294,8 @@ section {
 
 @media (max-width: 768px) {
     .track-card {
-        width: 300px;
+        /* Viewport-relative width so cards never overflow body */
+        width: min(300px, calc(86vw));
         min-height: 220px;
         padding: 1.8rem 1.5rem;
     }
@@ -4714,57 +4872,182 @@ section {
     border-radius: 70% 30% 50% 50%;
 }
 
-/* Ensure content sits above shapes */
-.modal-content .committee-group,
-.modal-content .close-modal {
+/* Ensure committee groups sit above floating shapes */
+.modal-content .committee-group {
     position: relative;
     z-index: 2;
 }
 
-/* --- Hover Portrait Pop-up --- */
-.has-portrait {
-    position: relative;
+/* Close button: absolute position is set in .close-modal below;
+   only boost z-index here so it sits above floating shapes */
+.modal-content .close-modal {
+    z-index: 6;
 }
 
+/* ============================================================
+   MODAL PORTRAIT CARDS — Full-Cover Image Style
+   Matches the chief patron profile-card design:
+   image fills entire card, dark gradient overlay, text at bottom.
+   ============================================================ */
+.has-portrait {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    min-height: 280px; /* enough height to show face clearly */
+    background: #d0d5e0; /* fallback while image loads */
+    padding: 0; /* no padding — overlay handles spacing */
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    cursor: default;
+    transition: all 0.4s var(--ease-premium);
+    display: block; /* reset from flex */
+}
+
+/* Image fills entire card — MUST use inset:0 without top/left overrides */
 .hover-portrait {
     position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-100%) scale(0.85);
-    max-width: 280px;
-    max-height: 360px;
-    width: auto;
-    height: auto;
-    border-radius: var(--radius-xl);
+    inset: 0; /* top:0 right:0 bottom:0 left:0 — fills entire card */
+    width: 100%;
+    height: 100%;
+    transform: none;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
     overflow: hidden;
-    border: 3px solid #fff;
-    box-shadow:
-        0 12px 40px rgba(0, 16, 85, 0.18),
-        0 0 0 2px rgba(255, 121, 0, 0.15);
-    opacity: 0;
+    border: none;
+    box-shadow: none;
+    opacity: 1;
     pointer-events: none;
-    transition: all 0.35s var(--ease-premium);
-    z-index: 10;
-    background: linear-gradient(135deg, #e8edf5, #fce8d5);
+    transition: transform 0.6s var(--ease-premium);
+    z-index: 0;
+    background: linear-gradient(135deg, #c8d0e0, #e0cfc0);
 }
 
 .hover-portrait img {
     width: 100%;
-    height: auto;
+    height: 100%;
     display: block;
-    object-fit: contain;
+    object-fit: cover;
+    object-position: center 25%; /* show face — upper third of typical headshot */
+    transition: transform 0.6s var(--ease-premium);
 }
 
-.has-portrait:hover .hover-portrait {
-    opacity: 1;
-    transform: translateX(-50%) translateY(-100%) scale(1);
-    pointer-events: auto;
+/* Dark gradient overlay — text legibility */
+.has-portrait::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to top,
+        rgba(0, 8, 40, 0.92) 0%,
+        rgba(0, 8, 40, 0.8) 18%,
+        rgba(0, 8, 40, 0.15) 32%,
+        transparent 42%
+    );
+    z-index: 1;
+    transition: background 0.4s var(--ease-premium);
+}
+
+/* Bottom accent bar on hover */
+.has-portrait::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 3px;
+    background: var(--gradient-accent);
+    z-index: 3;
+    transition: width 0.4s var(--ease-premium);
+}
+
+/* Text overlay sits at bottom — always visible */
+.has-portrait h4,
+.has-portrait p,
+.has-portrait .badge {
+    position: relative;
+    z-index: 2;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+/* Card uses flex-column so text items stack bottom-up naturally.
+   hover-portrait is absolute so it doesn't affect flex flow. */
+.has-portrait {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: 1rem;
+}
+
+.has-portrait h4 {
+    font-size: 1rem;
+    color: #fff;
+    margin: 0.2rem 0 0.15rem;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+    padding-top: 0;
+}
+
+.has-portrait p {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.82rem;
+    line-height: 1.35;
+    margin: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Role/label badge */
+.has-portrait .badge {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    background: rgba(255, 121, 0, 0.25);
+    color: #ffcc80;
+    border: 1px solid rgba(255, 121, 0, 0.2);
+    border-radius: 9999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 0.3rem;
+    width: fit-content;
+}
+
+/* Hover: image zooms slightly, accent bar appears */
+.has-portrait:hover {
+    transform: translateY(-4px);
+    box-shadow:
+        0 16px 40px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 121, 0, 0.25);
+}
+
+.has-portrait:hover .hover-portrait img {
+    transform: scale(1.04);
+}
+
+.has-portrait:hover::after {
+    width: 100%;
+}
+
+.has-portrait:hover::before {
+    background: linear-gradient(
+        to top,
+        rgba(0, 8, 40, 0.96) 0%,
+        rgba(0, 8, 40, 0.65) 45%,
+        rgba(0, 8, 40, 0.1) 75%,
+        transparent 100%
+    );
 }
 
 .close-modal {
     position: absolute;
     top: 1.5rem;
-    left: 53rem;
+    right: 1.5rem; /* Fixed: was hardcoded left:53rem which broke on mobile */
+    left: auto;
     background: rgba(0, 16, 85, 0.06);
     border: 1px solid rgba(0, 16, 85, 0.08);
     width: 40px;
@@ -5001,9 +5284,10 @@ section {
    GLOBAL RESPONSIVENESS OVERRIDES
    -------------------------------------*/
 @media (max-width: 768px) {
+    /* --- General --- */
     section {
         min-height: auto;
-        padding-top: 6rem;
+        padding-top: 5rem;
         padding-bottom: 4rem;
         scroll-snap-align: none;
     }
@@ -5013,32 +5297,605 @@ section {
         scroll-snap-type: none;
     }
 
+    .section-padding {
+        padding: 5rem 5%;
+    }
+
+    .section-title {
+        font-size: clamp(1.8rem, 6vw, 2.8rem);
+    }
+
+    .section-header {
+        margin-bottom: 2rem;
+    }
+
+    /* --- Hero Section --- */
     .hero-section {
-        height: auto;
-        min-height: 100vh;
+        /* Do NOT override to height:auto — keep 100svh/100vh so the landing
+           page always fills exactly one screen on every device.
+           Only change: disable the iOS-broken fixed attachment, adjust padding. */
+        height: 100svh;
+        height: 100vh;
+        min-height: 600px;
+        background-attachment: scroll; /* Fix iOS background-attachment: fixed bug */
+        padding: 6rem 5% 5rem;
     }
 
     .scroll-indicator {
         display: none;
     }
+
     .hero-content {
-        padding: 0 1.5rem;
-        margin-top: 2rem;
+        padding: 0 1rem;
+        margin-top: 1rem;
     }
+
     .hero-split {
         flex-direction: column;
-        gap: 2.5rem;
+        gap: 2rem;
         text-align: center;
     }
+
     .hero-left {
         text-align: center;
     }
+
     .hero-right {
-        flex: 1;
         width: 100%;
         align-items: center;
     }
+
     .hero-actions {
         justify-content: center;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .hero-actions .btn {
+        width: 100%;
+        max-width: 280px;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.85rem;
+    }
+
+    /* --- About Conference --- */
+    .about-section {
+        min-height: auto;
+    }
+
+    .about-container {
+        padding: 0 1.5rem;
+    }
+
+    .glass-slider-wrapper {
+        /* Tall enough so the longest slide text never clips at the bottom */
+        min-height: 480px;
+    }
+
+    .glass-slide {
+        padding: 1.5rem 1.25rem 3.5rem; /* bottom padding clears the nav dots */
+        justify-content: flex-start;
+        overflow-y: auto;
+    }
+
+    .glass-slide .slide-title {
+        font-size: 1.1rem;
+        margin-bottom: 0.85rem;
+    }
+
+    .glass-slide p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 0.75rem;
+    }
+
+    .feature-cards {
+        gap: 1rem;
+    }
+
+    /* --- About TMU --- */
+    .tmu-section {
+        min-height: auto;
+    }
+
+    .tmu-container {
+        padding: 0 1.5rem;
+    }
+
+    /* Simplify 3D gallery on mobile */
+    .tmu-gallery {
+        position: relative;
+        height: 220px;
+        margin-top: 1.5rem;
+    }
+
+    .tmu-image-card {
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        box-shadow: var(--shadow-card);
+    }
+
+    .tmu-image-card.pos-front {
+        position: absolute;
+        width: 90%;
+        left: 5%;
+        top: 0;
+        z-index: 3;
+        transform: none;
+        filter: none;
+    }
+
+    .tmu-image-card.pos-back-left,
+    .tmu-image-card.pos-back-right {
+        display: none;
+    }
+
+    .tmu-stats {
+        /* Use a flexible grid that never overflows the viewport.
+           3 equal columns work fine on ≥400px, narrower screens get 3
+           columns that shrink proportionally. Use min() to constrain.
+           Also hide overflow so no stat card ever bleeds off-screen. */
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+        overflow: hidden;
+    }
+
+    .stat-card-glass {
+        padding: 0.65rem 0.5rem;
+        min-width: 0; /* allow flex/grid children to shrink below content width */
+    }
+
+    .stat-card-glass .stat-value {
+        font-size: 1.3rem;
+    }
+
+    .stat-card-glass .stat-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.5px;
+    }
+
+    /* --- COE Section --- */
+    .coe-section {
+        min-height: auto;
+    }
+
+    .coe-container {
+        padding: 0 1.5rem;
+    }
+
+    .coe-features {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .industry-connect {
+        margin-top: 1.5rem;
+    }
+
+    .partner-logos {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    /* --- About Department --- */
+    .dept-section {
+        min-height: auto;
+    }
+
+    /* --- Objectives Section --- */
+    .objectives-section {
+        min-height: auto;
+        overflow: clip; /* clip shapes/slider from causing body width expansion */
+        max-width: 100vw;
+        padding-left: 4%;
+        padding-right: 4%;
+    }
+
+    .objectives-container {
+        width: 100%;
+        max-width: 100%;
+        padding: 0;
+        overflow: hidden;
+    }
+
+    /* Make the slider fill the available width on mobile */
+    .slider-container {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    /* Each card fills the full container width on mobile */
+    .slider-card {
+        width: 92vw;
+        max-width: 400px;
+    }
+
+    /* --- Expected Outcomes --- */
+    .outcomes-section {
+        min-height: auto;
+        padding: 5rem 5%;
+    }
+
+    /* --- Technical Tracks --- */
+    .tracks-section {
+        min-height: auto;
+        padding: 5rem 4%;
+    }
+
+    /* --- Guidelines --- */
+    .guidelines-section {
+        min-height: auto;
+        padding: 5rem 5%;
+    }
+
+    /* --- Invitation Section --- */
+    .invitation-content {
+        flex-direction: column;
+        gap: 1.25rem;
+    }
+
+    .invitation-section {
+        padding: 3rem 5%;
+    }
+
+    .invite-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .invite-actions .btn {
+        width: 100%;
+        max-width: 280px;
+    }
+
+    /* --- Speakers Section --- */
+    .speakers-section {
+        min-height: auto;
+    }
+
+    /* --- Registration Section --- */
+    .registration-section {
+        min-height: auto;
+        padding: 5rem 5%;
+    }
+
+    .reg-layout {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .reg-panel,
+    .dates-panel {
+        width: 100%;
+        padding: 1.75rem 1.5rem;
+    }
+
+    /* --- Committee Section --- */
+    .committee-section {
+        min-height: auto;
+        padding: 5rem 5%;
+    }
+
+    .profile-card {
+        min-height: 260px;
+    }
+
+    /* --- Footer --- */
+    .footer-bottom {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+    }
+}
+
+/* =============================================
+   RESPONSIVE: Small Mobile (≤ 480px)
+   ============================================= */
+@media (max-width: 480px) {
+    .section-padding {
+        padding: 4.5rem 4% 3.5rem;
+    }
+
+    .section-title {
+        font-size: clamp(1.6rem, 7vw, 2.2rem);
+    }
+
+    .hero-section {
+        padding: 6.5rem 4% 4rem;
+    }
+
+    .hero-title {
+        font-size: clamp(1.9rem, 9vw, 2.8rem);
+        letter-spacing: -0.5px;
+    }
+
+    .hero-subtitle {
+        font-size: 1rem;
+        letter-spacing: 1px;
+    }
+
+    .hero-actions .btn {
+        padding: 0.85rem 1.5rem;
+        font-size: 0.95rem;
+    }
+
+    .detail-card {
+        gap: 0.85rem;
+        padding: 0.9rem 1rem;
+    }
+
+    .detail-card .icon {
+        width: 42px;
+        height: 42px;
+    }
+
+    .detail-card .label {
+        font-size: 0.75rem;
+    }
+
+    .detail-card strong {
+        font-size: 1rem;
+    }
+
+    .tmu-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+
+    .stat-card-glass {
+        padding: 0.6rem 0.75rem;
+    }
+
+    .stat-value {
+        font-size: 1.3rem;
+    }
+
+    .stat-label {
+        font-size: 0.65rem;
+    }
+
+    .slider-card {
+        width: 260px;
+        padding: 1.5rem 1.25rem;
+    }
+
+    .track-card {
+        width: 260px;
+    }
+}
+/* =================================================================
+   SMALL PHONE OVERRIDES (≤ 400px) — Samsung S8+, iPhone SE, etc.
+   ALL content must fit in 100vh WITHOUT scrolling the hero.
+   Key principle: shrink content, NOT change overflow behaviour.
+   ================================================================= */
+@media (max-width: 400px) {
+    /* --- Body / global --- */
+    body {
+        overflow-x: hidden;
+    }
+
+    /* --- Suppress hero title line-breaks so text wraps naturally
+         (much more compact on narrow screens) --- */
+    .hero-section br {
+        display: none;
+    }
+
+    /* --- Hero: min-height fills one screen but height grows if needed.
+         justify-content: flex-start puts content from the top so nothing
+         gets clipped above the fold. overflow allows content to grow. --- */
+    .hero-section {
+        height: auto;
+        min-height: 100svh;
+        min-height: 100vh; /* fallback for browsers without svh */
+        padding: 5.5rem 4% 3rem;
+        justify-content: flex-start;
+        align-items: center;
+        overflow: visible;
+    }
+
+    .hero-content {
+        padding: 0;
+        margin-top: 0;
+    }
+
+    .hero-split {
+        gap: 0.75rem;
+    }
+
+    /* Badge: tiny */
+    .badge {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.65rem;
+        margin-bottom: 0.15rem;
+    }
+
+    /* Title: let it wrap naturally (no BRs), compact size */
+    .hero-title {
+        font-size: clamp(1.55rem, 9.5vw, 2rem);
+        letter-spacing: -0.5px;
+        margin-bottom: 0.35rem;
+        line-height: 1.15;
+    }
+
+    .hero-subtitle {
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        margin-bottom: 0;
+    }
+
+    /* Detail cards: tighter */
+    .hero-details-vertical {
+        gap: 0.4rem;
+    }
+
+    .detail-card {
+        padding: 0.55rem 0.8rem;
+        gap: 0.6rem;
+        min-height: unset;
+    }
+
+    .detail-card .icon {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+    }
+
+    .detail-card .icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .detail-card .label {
+        font-size: 0.6rem;
+        margin-bottom: 0.05rem;
+    }
+
+    .detail-card strong {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    /* Action buttons: shorter height */
+    .hero-actions {
+        gap: 0.4rem;
+        margin-top: 0.4rem;
+    }
+
+    .hero-actions .btn {
+        padding: 0.65rem 1.2rem;
+        font-size: 0.85rem;
+    }
+
+    /* --- Section titles: use smaller clamp and word-break as fallback --- */
+    .section-title {
+        font-size: clamp(1.4rem, 7.5vw, 1.9rem);
+        word-break: break-word;
+    }
+
+    /* --- Sliders: cards must be narrower than viewport --- */
+    .slider-card {
+        width: min(260px, 84vw);
+        min-height: 230px;
+        padding: 1.2rem 1rem;
+    }
+
+    .track-card {
+        width: min(260px, 84vw);
+        min-height: 200px;
+        padding: 1.5rem 1.25rem;
+    }
+
+    /* --- Container overflow protection for all sections --- */
+    .objectives-container,
+    .outcomes-container,
+    .about-container,
+    .tmu-container,
+    .coe-container,
+    .dept-container,
+    .registration-container,
+    .guidelines-container {
+        overflow-x: hidden;
+    }
+
+    /* --- Section padding reduction --- */
+    .section-padding {
+        padding: 4rem 4% 3rem;
+    }
+}
+
+/* =================================================================
+   COMMITTEE MODAL — Mobile Responsive Overrides
+   ================================================================= */
+@media (max-width: 768px) {
+    /* Modal overlay: reduce padding so modal fills more of screen */
+    .committee-modal {
+        padding: 0.75rem;
+    }
+
+    /* Modal content: tighter padding and margin */
+    .modal-content {
+        padding: 2rem 1.25rem 1.5rem;
+        margin: 0.5rem auto;
+        border-radius: var(--radius-xl);
+    }
+
+    /* Close button stays in top-right corner (already fixed by right:1.5rem above) */
+    .close-modal {
+        top: 1rem;
+        right: 1rem;
+        width: 36px;
+        height: 36px;
+    }
+
+    /* Group title: much smaller on mobile */
+    .committee-group-title {
+        font-size: 1.3rem;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* Group spacing: reduce bottom margin */
+    .committee-group {
+        margin-bottom: 3rem;
+    }
+
+    /* List grid: 2 columns on mobile for portrait cards */
+    .list-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    /* Portrait cards: taller min-height so faces show properly at 2-col width */
+    .has-portrait {
+        min-height: 260px;
+    }
+
+    /* Section header inside modal */
+    .modal-content .section-title {
+        font-size: clamp(1.4rem, 6vw, 1.8rem);
+        word-break: break-word;
+    }
+
+    /* Decorative shapes: hide most on mobile to reduce paint cost */
+    .modal-shape-3,
+    .modal-shape-5,
+    .modal-shape-7,
+    .modal-shape-9,
+    .modal-shape-11,
+    .modal-shape-13,
+    .modal-shape-15,
+    .modal-shape-17,
+    .modal-shape-19 {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    /* On very small phones: single column list grid */
+    .list-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    /* Portrait cards: full-width single column, taller for face visibility */
+    .has-portrait {
+        min-height: 300px;
+    }
+
+    /* Tighter modal padding */
+    .modal-content {
+        padding: 1.5rem 1rem 1.25rem;
+    }
+
+    .committee-group-title {
+        font-size: 1.1rem;
+    }
+
+    .committee-group {
+        margin-bottom: 2rem;
     }
 }
